@@ -1,14 +1,13 @@
 # ContactBook_Api
 App created using Django-Rest-Framework
 
-  <h1 class="mt-4 mb-4">Welcome to Simple Contact Book API</h1>
 <hr class="mt-4 mb-4" style="height: 3px; background:blue;">
 <ul>
   <li>
-    <h5>You can register at --> <strong>(name_app)/api/users/register/</strong> <-- You will get the TOKEN.</h5>
+    <h5>You can register at --> POST <strong>(name_app)/api/users/register/</strong> <-- You will get the TOKEN.</h5>
   </li>
   <li>
-      <h5>You can then login at --> <strong>(name_app)/api/users/login/</strong></h5>
+      <h5>You can then login at --> POST <strong>(name_app)/api/users/login/</strong></h5>
   </li>
 </ul>
 <hr class="mt-4 mb-4" style="height: 3px; background:blue;">
