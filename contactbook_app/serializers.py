@@ -11,4 +11,5 @@ class PersonSerializer(serializers.ModelSerializer):
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = '__all__'
+        fields = ['id', 'address', 'email', 'birthdate', 'active', 'person']
+

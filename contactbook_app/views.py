@@ -1,46 +1,56 @@
 from django.shortcuts import render
-from rest_framework.decorators import api_view
+from django.http import Http404
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework import status, generics, mixins
 from .models import Person, Contact
 from .serializers import PersonSerializer, ContactSerializer
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 
 ######## PERSON ###########
-@api_view(['GET', 'POST'])
-def persons_list(request):
-    if request.method == 'GET':
-        persons = Person.objects.filter(active=True)
-        serializer = PersonSerializer(persons, many=True)
-        return Response(serializer.data)
+class PersonApiView(generics.GenericAPIView,
+                    mixins.ListModelMixin,
+                    mixins.CreateModelMixin):
 
-    elif request.method == 'POST':
-        serializer = PersonSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer_class = PersonSerializer
+    queryset = Person.objects.filter(active=True)
+    authentication_classes = [SessionAuthentication, BasicAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return self.list(request)
+
+    def post(self, request):
+        return self.create(request)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def person_detail(request, id):
-    try:
-        person = Person.objects.get(id=id)
-    except Person.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+class PersonApiDetail(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
-    if request.method == 'GET':
+    def get_object(self, id):
+        try:
+            return Person.objects.get(id=id)
+        except Person.DoesNotExist:
+            raise Http404
+
+    def get(self, request, id):
+        person = self.get_object(id)
         serializer = PersonSerializer(person)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
+    def put(self, request, id):
+        person = self.get_object(id)
         serializer = PersonSerializer(person, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, id):
+        person = self.get_object(id)
         serializer = PersonSerializer(person, data={'active': False}, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -49,45 +59,71 @@ def person_detail(request, id):
 
 
 ######### CONTACT ###########
-@api_view(['GET', 'POST'])
-def contacts_list(request):
-    if request.method == 'GET':
-        contacts = Contact.objects.filter(active=True)
-        serializer = ContactSerializer(contacts, many=True)
-        return Response(serializer.data)
+class ContactApiView(generics.GenericAPIView,
+                    mixins.ListModelMixin,
+                    mixins.CreateModelMixin):
 
-    elif request.method == 'POST':
-        serializer = ContactSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer_class = ContactSerializer
+    queryset = Contact.objects.filter(active=True)
+    authentication_classes = [SessionAuthentication, BasicAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return self.list(request)
+
+    def post(self, request):
+        return self.create(request)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def contact_detail(request, id):
-    try:
-        contact = Contact.objects.get(id=id)
-    except Contact.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+class ContactApiDetail(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
-    if request.method == 'GET':
+    def get_object(self, id):
+        try:
+            return Contact.objects.get(id=id)
+        except Contact.DoesNotExist:
+            raise Http404
+
+    def get(self, request, id):
+        contact = self.get_object(id)
         serializer = ContactSerializer(contact)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
+    def put(self, request, id):
+        contact = self.get_object(id)
         serializer = ContactSerializer(contact, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, id):
+        contact = self.get_object(id)
         serializer = ContactSerializer(contact, data={'active': False}, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+######### ADDRESS #####################
+class AddressApiView(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.query_params.get('is_older_than'):
+            is_older_than = request.query_params.get('is_older_than')
+
+            persons = Person.objects.filter(birthdate__lt=is_older_than)
+            serializer_per = PersonSerializer(persons, many=True)
+
+            contacts = Contact.objects.filter(birthdate__lt=is_older_than)
+            serializer_cont = ContactSerializer(contacts, many=True)
+
+            return Response([serializer_per.data, serializer_cont.data])
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 

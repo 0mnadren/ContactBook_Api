@@ -27,6 +27,7 @@ class Person(AddressEntry):
 class Contact(AddressEntry):
     address = models.CharField(max_length=225)
     email = models.EmailField(max_length=225, blank=True)
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.firstname} -- Address: {self.address} {self.email}'
